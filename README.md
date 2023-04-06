@@ -74,6 +74,17 @@ Spectral.js supports WebGL and WebGL2 shaders and has a built-in function 'spect
 ## Contributing
 We welcome contributions from the community. If you find a bug or have a feature request, please open an issue on Github.
 
+## Donations
+Hi everyone,
+
+I'm thrilled to announce the launch of my new JavaScript library! It's taken months of hard work to create, but I'm happy to offer it to you for free. If you find it helpful, please consider supporting my work with a donation in ETH to OneDayOfCrypto.eth or in Tezos to OneDayOfCrypto.tez.
+
+Your donation will help me continue to maintain and improve the library. If you're unable to contribute financially, you can still help by sharing the library with others or leaving a positive review.
+
+Thank you for your support!
+
+Ronald
+
 ## License
 Spectral.js is released under the MIT License. See the LICENSE file for details.
 
