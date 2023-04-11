@@ -1,4 +1,5 @@
 
+
 ![logo](/images/logo.png)
 # Spectral.js
 [![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/onedayofcrypto.svg?style=social&label=Follow%20%40onedayofcrypto)](https://twitter.com/bukotsunikki)
@@ -53,37 +54,39 @@ The spectral.palette function takes 3 required parameters: color1, color2, and l
 ![image2](/images/image2.png)
 
 ### Shaders
-Spectral.js supports WebGL and WebGL2 shaders and has a built-in function 'spectral.webgl_color()' to conveniently convert color notation to an array for the shader. 
-##### WebGL
-	let vertShader = createShader(gl, gl.VERTEX_SHADER, spectral.webgl_vertex());
-	let fragShader = createShader(gl, gl.FRAGMENT_SHADER, spectral.webgl_fragment());
-	
-	gl.uniform3fv(gl.getUniformLocation(program, 'u_color1'), spectral.webgl_color('DCEB0f'));
-	gl.uniform3fv(gl.getUniformLocation(program, 'u_color2'), spectral.webgl_color('D33C3C'));
-	
+Spectral.js supports GLSL shaders and has a built-in function 'spectral.glsl_color()' to conveniently convert color notation to an array for the shader. 
 
-##### WebGL2
-	let vertShader = createShader(gl, gl.VERTEX_SHADER, spectral.webgl2_vertex());
-	let fragShader = createShader(gl, gl.FRAGMENT_SHADER, spectral.webgl2_fragment());
-	
-	gl.uniform3fv(gl.getUniformLocation(program, 'u_color1'), spectral.webgl_color('rgb(220, 235, 15)'));
-	gl.uniform3fv(gl.getUniformLocation(program, 'u_color2'), spectral.webgl_color('rgb(211, 60, 60)'));
+##### GLSL
+	let fragment = `
+	    #ifdef GL_ES
+	    precision mediump float;
+	    #endif
+
+	    #include "spectral.glsl"
+
+	    uniform vec2 u_resolution;
+	    uniform vec4 u_color1;
+	    uniform vec4 u_color2;
+	    
+	    void main() {
+	        vec2 st = gl_FragCoord.xy / u_resolution.xy;
+
+	        st.y = 1.0 - st.y;
+
+	        vec4 col = spectral_mix(u_color1, u_color2, st.x); 
+
+	        gl_FragColor = col;
+	    }
+	`;
+
+	fragment = fragment.replace('#include "spectral.glsl"', spectral.glsl());
 
 ![image3](/images/image3.png)
 
+There is also support for GLSL 3, this is available in spectral.glsl3().
+
 ## Contributing
 We welcome contributions from the community. If you find a bug or have a feature request, please open an issue on Github.
-
-## Donations
-Hi everyone,
-
-I'm thrilled to announce the launch of my new JavaScript library! It's taken months of hard work to create, but I'm happy to offer it to you for free. If you find it helpful, please consider supporting my work with a donation in ETH to OneDayOfCrypto.eth or in Tezos to OneDayOfCrypto.tez.
-
-Your donation will help me continue to maintain and improve the library. If you're unable to contribute financially, you can still help by sharing the library with others or leaving a positive review.
-
-Thank you for your support!
-
-Ronald
 
 ## License
 Spectral.js is released under the MIT License. See the LICENSE file for details.

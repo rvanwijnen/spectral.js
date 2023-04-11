@@ -39,15 +39,14 @@
   const EPSILON = 0.00000001;
 
   function linear_to_concentration(l1, l2, t) {
-    let t1 = l1 * Math.pow(1 - t, 2);
-    let t2 = l2 * Math.pow(t, 2);
+    let t1 = l1 * (1 - t) ** 2;
+    let t2 = l2 * t ** 2;
 
     return t2 / (t1 + t2);
   }
 
   function luminance(color) {
-    //D65 Y
-    return dotproduct(D65_RGB_XYZ[1], color);
+    return dotproduct(RGB_XYZ[1], color);
   }
 
   function mix(color1, color2, t, returnFormat) {
@@ -70,10 +69,10 @@
     for (let i = 0; i < SIZE; i++) {
       let KS = 0;
 
-      KS += (1 - t) * (Math.pow(1 - R1[i], 2) / (2 * R1[i]));
-      KS += t * (Math.pow(1 - R2[i], 2) / (2 * R2[i]));
+      KS += (1 - t) * ((1 - R1[i]) ** 2 / (2 * R1[i]));
+      KS += t * ((1 - R2[i]) ** 2 / (2 * R2[i]));
 
-      let KM = 1 + KS - Math.sqrt(Math.pow(KS, 2) + 2 * KS);
+      let KM = 1 + KS - Math.sqrt(KS ** 2 + 2 * KS);
 
       //Saunderson correction
       // let S = ((1.0 - K1) * (1.0 - K2) * KM) / (1.0 - K2 * KM);
@@ -98,16 +97,15 @@
     return g;
   }
 
-  function uncompand(x, g) {
-    return x < 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, GAMMA);
+  function uncompand(x) {
+    return x < 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** GAMMA;
   }
 
-  function compand(x, g) {
-    return x < 0.0031308 ? x * 12.92 : 1.055 * Math.pow(x, 1.0 / GAMMA) - 0.055;
+  function compand(x) {
+    return x < 0.0031308 ? x * 12.92 : 1.055 * x ** (1.0 / GAMMA) - 0.055;
   }
 
   function srgb_to_linear(srgb) {
-    //add epsilon to prevent division by zero
     let r = uncompand((srgb[0] + EPSILON) / 255.0);
     let g = uncompand((srgb[1] + EPSILON) / 255.0);
     let b = uncompand((srgb[2] + EPSILON) / 255.0);
@@ -116,7 +114,6 @@
   }
 
   function linear_to_srgb(lrgb) {
-    //remove epsilon
     let r = compand(lrgb[0] - EPSILON);
     let g = compand(lrgb[1] - EPSILON);
     let b = compand(lrgb[2] - EPSILON);
@@ -125,17 +122,17 @@
   }
 
   function xyz_to_srgb(xyz) {
-    let r = dotproduct(D65_XYZ_RGB[0], xyz);
-    let g = dotproduct(D65_XYZ_RGB[1], xyz);
-    let b = dotproduct(D65_XYZ_RGB[2], xyz);
+    let r = dotproduct(XYZ_RGB[0], xyz);
+    let g = dotproduct(XYZ_RGB[1], xyz);
+    let b = dotproduct(XYZ_RGB[2], xyz);
 
     return linear_to_srgb([r, g, b]);
   }
 
   function reflectance_to_xyz(R) {
-    let x = dotproduct(R, CIE_2012_CMF_X);
-    let y = dotproduct(R, CIE_2012_CMF_Y);
-    let z = dotproduct(R, CIE_2012_CMF_Z);
+    let x = dotproduct(R, CIE_CMF_X);
+    let y = dotproduct(R, CIE_CMF_Y);
+    let z = dotproduct(R, CIE_CMF_Z);
 
     return [x, y, z];
   }
@@ -166,7 +163,7 @@
     return a.map((x, i) => a[i] * b[i]).reduce((m, n) => m + n);
   }
 
-  function webgl_color(c) {
+  function glsl_color(c) {
     let rgba = unpack(c);
 
     return [rgba[0] / 255, rgba[1] / 255, rgba[2] / 255, rgba[3] > 1 ? rgba[3] / 255 : rgba[3]];
@@ -239,7 +236,7 @@
   // Vacuum = 1
 
   const RI = 1;
-  const K1 = Math.pow(RI - 1, 2) / Math.pow(RI + 1, 2);
+  const K1 = (RI - 1) ** 2 / (RI + 1) ** 2;
 
   // 0 = neutral, - = lighten, + = darken
   const K2 = 0;
@@ -262,87 +259,62 @@
     0.02047109, 0.02047109, 0.02047109, 0.02047109, 0.02047109, 0.02047109, 0.02047109, 0.02047109, 0.02047109,
   ];
 
-  const CIE_2012_CMF_X = [
+  const CIE_CMF_X = [
     0.00013656, 0.00131637, 0.00640948, 0.01643026, 0.02407799, 0.03573573, 0.03894236, 0.03004572, 0.0186094, 0.0074502, 0.00129006, 0.00052314, 0.00344737, 0.01065677,
     0.02169564, 0.03395004, 0.04732762, 0.06029657, 0.07284094, 0.08385845, 0.08612109, 0.08746894, 0.07951403, 0.06405614, 0.04521591, 0.03062648, 0.01838938, 0.0104432,
     0.00576692, 0.00279715, 0.00119535, 0.00059496, 0.00029365, 0.000115, 0.00006279, 0.00003275, 0.00001376,
   ];
 
-  const CIE_2012_CMF_Y = [
+  const CIE_CMF_Y = [
     0.00001886, 0.0001814, 0.00080632, 0.00203723, 0.00344701, 0.00662872, 0.01029015, 0.01410577, 0.0194424, 0.02631783, 0.03273183, 0.04424704, 0.057012, 0.06907721, 0.08047999,
     0.08541136, 0.08725039, 0.08416902, 0.07860677, 0.07114656, 0.0590749, 0.05050107, 0.04005938, 0.02932589, 0.01939909, 0.01258803, 0.00734245, 0.00409671, 0.00223674,
     0.00107927, 0.00046015, 0.00022887, 0.000113, 0.00004432, 0.00002425, 0.00001268, 0.00000535,
   ];
 
-  const CIE_2012_CMF_Z = [
+  const CIE_CMF_Z = [
     0.00060998, 0.00595953, 0.02967913, 0.07855475, 0.11921905, 0.18425721, 0.21077492, 0.1763428, 0.12741269, 0.0737491, 0.03663768, 0.01923495, 0.00807728, 0.00335702,
     0.00140323, 0.00053757, 0.00020463, 0.00007431, 0.00002725, 0.00001053, 0.00000391, 0.00000166, 0.00000072, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0,
   ];
 
-  const D65_XYZ_RGB = [
-    [3.24306333, -1.53837619, -0.49893282],
-    [-0.96896309, 1.87542451, 0.04154303],
-    [0.05568392, -0.20417438, 1.05799454],
+  const XYZ_RGB = [
+    [3.24096994, -1.53738318, -0.49861076],
+    [-0.96924364, 1.8759675, 0.04155506],
+    [0.05563008, -0.20397696, 1.05697151],
   ];
 
-  const D65_RGB_XYZ = [
-    [0.4121246, 0.35768787, 0.18030627],
-    [0.21250175, 0.71537574, 0.07212251],
-    [0.01931834, 0.11922929, 0.94961304],
+  const RGB_XYZ = [
+    [0.4123908, 0.35758434, 0.18048079],
+    [0.21263901, 0.71516868, 0.07219232],
+    [0.01933082, 0.11919478, 0.95053215],
   ];
 
-  function webgl_vertex() {
+  function glsl() {
     return `
-#ifdef GL_ES
-precision lowp float;
-#endif
+#ifndef SPECTRAL
+#define SPECTRAL
 
-attribute vec3 aPosition;
+const int SPECTRAL_SIZE = 37;
+const float SPECTRAL_GAMMA = 2.4;
+const float SPECTRAL_EPSILON = 0.01;
 
-void main() {
- vec4 positionVec4 = vec4(aPosition, 1.0);
-
-  positionVec4.xy = positionVec4.xy * 2.0 - 1.0; 
-
-  gl_Position = positionVec4;
-}
-    `;
-  }
-
-  function webgl_fragment() {
-    return `
-#ifdef GL_ES
-precision lowp float;
-#endif
-
-uniform vec2 u_resolution;
-uniform vec4 u_color1;
-uniform vec4 u_color2;
-
-const int SIZE = 37;
-const float GAMMA = 2.4;
-const float EPSILON = 0.00000001;
-
-float uncompand(float x) {
-  return (x < 0.04045) ? x / 12.92 : pow((x + 0.055) / 1.055, GAMMA);
+float spectral_uncompand(float x) {
+  return (x < 0.04045) ? x / 12.92 : pow((x + 0.055) / 1.055, SPECTRAL_GAMMA);
 }
 
-float compand(float x) {
-  return (x < 0.0031308) ? x * 12.92 : 1.055 * pow(x, 1.0 / GAMMA) - 0.055;
+float spectral_compand(float x) {
+  return (x < 0.0031308) ? x * 12.92 : 1.055 * pow(x, 1.0 / SPECTRAL_GAMMA) - 0.055;
 }
 
-vec3 srgb_to_linear(vec3 srgb) {
-    //add epsilon to prevent division by zero
-    return vec3(uncompand(srgb[0] + EPSILON), uncompand(srgb[1] + EPSILON), uncompand(srgb[2] + EPSILON));
+vec3 spectral_srgb_to_linear(vec3 srgb) {
+    return vec3(spectral_uncompand(srgb[0] + SPECTRAL_EPSILON), spectral_uncompand(srgb[1] + SPECTRAL_EPSILON), spectral_uncompand(srgb[2] + SPECTRAL_EPSILON));
 }
 
-vec3 linear_to_srgb(vec3 lrgb) {
-    //remove epsilon
-    return clamp(vec3(compand(lrgb[0] - EPSILON), compand(lrgb[1] - EPSILON), compand(lrgb[2] - EPSILON)), 0.0, 1.0);
+vec3 spectral_linear_to_srgb(vec3 lrgb) {
+    return clamp(vec3(spectral_compand(lrgb[0] - SPECTRAL_EPSILON), spectral_compand(lrgb[1] - SPECTRAL_EPSILON), spectral_compand(lrgb[2] - SPECTRAL_EPSILON)), 0.0, 1.0);
 }
 
-void linear_to_reflectance(vec3 lrgb, inout float R[SIZE]) {
+void spectral_linear_to_reflectance(vec3 lrgb, inout float R[SPECTRAL_SIZE]) {
      R[0] = dot(vec3(0.03065266, 0.00488428, 0.96446343), lrgb);
      R[1] = dot(vec3(0.03065266, 0.00488428, 0.96446661), lrgb);
      R[2] = dot(vec3(0.03012503, 0.00489302, 0.96499804), lrgb);
@@ -382,21 +354,21 @@ void linear_to_reflectance(vec3 lrgb, inout float R[SIZE]) {
     R[36] = dot(vec3(0.97432335, 0.00520568, 0.02047109), lrgb);
 }
 
-vec3 xyz_to_srgb(vec3 xyz) {
-    mat3 D65_XYZ_RGB;
+vec3 spectral_xyz_to_srgb(vec3 xyz) {
+    mat3 XYZ_RGB;
 
-    D65_XYZ_RGB[0] = vec3( 3.24306333, -1.53837619, -0.49893282);
-    D65_XYZ_RGB[1] = vec3(-0.96896309,  1.87542451,  0.04154303);
-    D65_XYZ_RGB[2] = vec3( 0.05568392, -0.20417438,  1.05799454);
+    XYZ_RGB[0] = vec3( 3.24096994, -1.53738318, -0.49861076);
+    XYZ_RGB[1] = vec3(-0.96924364,  1.87596750,  0.04155506);
+    XYZ_RGB[2] = vec3( 0.05563008, -0.20397696,  1.05697151);
     
-    float r = dot(D65_XYZ_RGB[0], xyz);
-    float g = dot(D65_XYZ_RGB[1], xyz);
-    float b = dot(D65_XYZ_RGB[2], xyz);
+    float r = dot(XYZ_RGB[0], xyz);
+    float g = dot(XYZ_RGB[1], xyz);
+    float b = dot(XYZ_RGB[2], xyz);
 
-    return linear_to_srgb(vec3(r, g, b));
+    return spectral_linear_to_srgb(vec3(r, g, b));
 }
 
-vec3 reflectance_to_xyz(float R[SIZE]) {
+vec3 spectral_reflectance_to_xyz(float R[SPECTRAL_SIZE]) {
     vec3 xyz = vec3(0.0);
     
     xyz +=  R[0] * vec3(0.00013656, 0.00001886, 0.00060998);
@@ -440,36 +412,35 @@ vec3 reflectance_to_xyz(float R[SIZE]) {
     return xyz;
 }
 
-float linear_to_concentration(float l1, float l2, float t) {
+float spectral_linear_to_concentration(float l1, float l2, float t) {
     float t1 = l1 * pow(1.0 - t, 2.0);
     float t2 = l2 * pow(t, 2.0);
 
     return t2 / (t1 + t2);
 }
 
-float luminance(vec3 color) {
-    //D65 Y
-    return dot(vec3(0.21250175, 0.71537574, 0.07212251), color);
+float spectral_luminance(vec3 color) {
+    return dot(vec3(0.21263901, 0.71516868, 0.07219232), color);
 }
 
 vec3 spectral_mix(vec3 color1, vec3 color2, float t) {
-    vec3 lrgb1 = srgb_to_linear(color1);
-    vec3 lrgb2 = srgb_to_linear(color2);
+    vec3 lrgb1 = spectral_srgb_to_linear(color1);
+    vec3 lrgb2 = spectral_srgb_to_linear(color2);
 
-    float l1 = luminance(lrgb1);
-    float l2 = luminance(lrgb2);
+    float l1 = spectral_luminance(lrgb1);
+    float l2 = spectral_luminance(lrgb2);
 
-    t = linear_to_concentration(l1, l2, t);
+    t = spectral_linear_to_concentration(l1, l2, t);
 
-    float R1[SIZE];
-    float R2[SIZE];
+    float R1[SPECTRAL_SIZE];
+    float R2[SPECTRAL_SIZE];
 
-    linear_to_reflectance(lrgb1, R1);
-    linear_to_reflectance(lrgb2, R2);
+    spectral_linear_to_reflectance(lrgb1, R1);
+    spectral_linear_to_reflectance(lrgb2, R2);
 
-    float R[SIZE];
+    float R[SPECTRAL_SIZE];
 
-    for (int i = 0; i < SIZE; i++) {
+    for (int i = 0; i < SPECTRAL_SIZE; i++) {
       float KS = 0.0;
 
       KS += (1.0 - t) * (pow(1.0 - R1[i], 2.0) / (2.0 * R1[i]));
@@ -483,52 +454,25 @@ vec3 spectral_mix(vec3 color1, vec3 color2, float t) {
       R[i] = KM;
     }
 
-    return xyz_to_srgb(reflectance_to_xyz(R));
+    return spectral_xyz_to_srgb(spectral_reflectance_to_xyz(R));
 }
 
-void main() {
-    vec2 st = gl_FragCoord.xy / u_resolution.xy;
-
-    st.y = 1.0 - st.y;
-
-    vec3 col = spectral_mix(u_color1.rgb, u_color2.rgb, st.x); 
-
-    gl_FragColor = vec4(col, mix(u_color1.a, u_color2.a, st.x));
+vec4 spectral_mix(vec4 color1, vec4 color2, float t) {
+    return vec4(spectral_mix(color1.rgb, color2.rgb, t), mix(color1.a, color2.a, t));
 }
-    `;
-  }
 
-  function webgl2_vertex() {
-    return `#version 300 es
-
-in vec3 aPosition;
-
-void main(){
-    vec4 positionVec4 = vec4(aPosition, 1.0);
-
-    positionVec4.xy = positionVec4.xy * 2.0 - 1.0; 
-
-    gl_Position = positionVec4;
-}
-    `;
-  }
-
-  function webgl2_fragment() {
-    return `#version 300 es
-
-#ifdef GL_ES
-precision mediump float;
 #endif
+    `;
+  }
 
-in vec2 u_resolution;
-in vec4 u_color1;
-in vec4 u_color2;
+  function glsl3() {
+    return `
+#ifndef SPECTRAL
+#define SPECTRAL
 
-out vec4 o_col;
-
-const int SIZE = 37;
-const float GAMMA = 2.4;
-const float EPSILON = 0.00000001;
+const int SPECTRAL_SIZE = 37;
+const float SPECTRAL_GAMMA = 2.4;
+const float SPECTRAL_EPSILON = 0.01;
 
 const float SPD_RED[SIZE] = float[SIZE](
     0.03065266, 0.03065266, 0.03012503, 0.0283744, 0.02443079, 0.01900359, 0.01345743, 0.00905147, 0.00606943, 0.0041924, 0.00300621, 0.00229452, 0.00190474, 0.00175435,
@@ -548,109 +492,107 @@ const float SPD_BLUE[SIZE] = float[SIZE](
     0.02047109, 0.02047109, 0.02047109, 0.02047109, 0.02047109, 0.02047109, 0.02047109, 0.02047109, 0.02047109
 );
 
-const float CIE_2012_CMF_X[SIZE] = float[SIZE](
+const float CIE_CMF_X[SIZE] = float[SIZE](
     0.00013656, 0.00131637, 0.00640948, 0.01643026, 0.02407799, 0.03573573, 0.03894236, 0.03004572, 0.0186094, 0.0074502, 0.00129006, 0.00052314, 0.00344737, 0.01065677,
     0.02169564, 0.03395004, 0.04732762, 0.06029657, 0.07284094, 0.08385845, 0.08612109, 0.08746894, 0.07951403, 0.06405614, 0.04521591, 0.03062648, 0.01838938, 0.0104432,
     0.00576692, 0.00279715, 0.00119535, 0.00059496, 0.00029365, 0.000115, 0.00006279, 0.00003275, 0.00001376
 );
 
-const float CIE_2012_CMF_Y[SIZE] = float[SIZE](
+const float CIE_CMF_Y[SIZE] = float[SIZE](
     0.00001886, 0.0001814, 0.00080632, 0.00203723, 0.00344701, 0.00662872, 0.01029015, 0.01410577, 0.0194424, 0.02631783, 0.03273183, 0.04424704, 0.057012, 0.06907721, 0.08047999,
     0.08541136, 0.08725039, 0.08416902, 0.07860677, 0.07114656, 0.0590749, 0.05050107, 0.04005938, 0.02932589, 0.01939909, 0.01258803, 0.00734245, 0.00409671, 0.00223674,
     0.00107927, 0.00046015, 0.00022887, 0.000113, 0.00004432, 0.00002425, 0.00001268, 0.00000535
 );
 
-const float CIE_2012_CMF_Z[SIZE] = float[SIZE](
+const float CIE_CMF_Z[SIZE] = float[SIZE](
     0.00060998, 0.00595953, 0.02967913, 0.07855475, 0.11921905, 0.18425721, 0.21077492, 0.1763428, 0.12741269, 0.0737491, 0.03663768, 0.01923495, 0.00807728, 0.00335702,
     0.00140323, 0.00053757, 0.00020463, 0.00007431, 0.00002725, 0.00001053, 0.00000391, 0.00000166, 0.00000072, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0
 );
 
-const mat3 D65_XYZ_RGB = mat3(
-    vec3(3.24306333, -1.53837619, -0.49893282),
-    vec3(-0.96896309, 1.87542451, 0.04154303),
-    vec3(0.05568392, -0.20417438, 1.05799454)
+const mat3 XYZ_RGB = mat3(
+    vec3( 3.24096994, -1.53738318, -0.49861076),
+    vec3(-0.96924364,  1.87596750,  0.04155506),
+    vec3( 0.05563008, -0.20397696,  1.05697151)
 );
 
-const mat3 D65_RGB_XYZ = mat3(
-    vec3(0.4121246, 0.35768787, 0.18030627),
-    vec3(0.21250175, 0.71537574, 0.07212251),
-    vec3(0.01931834, 0.11922929, 0.94961304)
+const mat3 RGB_XYZ = mat3(
+    vec3(0.41239080, 0.35758434, 0.18048079),
+    vec3(0.21263901, 0.71516868, 0.07219232),
+    vec3(0.01933082, 0.11919478, 0.95053215)
 );
 
-float uncompand(float x) {
-  return (x < 0.04045) ? x / 12.92 : pow((x + 0.055) / 1.055, GAMMA);
+float spectral_uncompand(float x) {
+  return (x < 0.04045) ? x / 12.92 : pow((x + 0.055) / 1.055, SPECTRAL_GAMMA);
 }
 
-float compand(float x) {
-  return (x < 0.0031308) ? x * 12.92 : 1.055 * pow(x, 1.0 / GAMMA) - 0.055;
+float spectral_compand(float x) {
+  return (x < 0.0031308) ? x * 12.92 : 1.055 * pow(x, 1.0 / SPECTRAL_GAMMA) - 0.055;
 }
 
-vec3 srgb_to_linear(vec3 srgb) {
-    //add epsilon to prevent division by zero
-    return vec3(uncompand(srgb[0] + EPSILON), uncompand(srgb[1] + EPSILON), uncompand(srgb[2] + EPSILON));
+vec3 spectral_srgb_to_linear(vec3 srgb) {
+    return vec3(spectral_uncompand(srgb[0] + SPECTRAL_EPSILON), spectral_uncompand(srgb[1] + SPECTRAL_EPSILON), spectral_uncompand(srgb[2] + SPECTRAL_EPSILON));
 }
 
-vec3 linear_to_srgb(vec3 lrgb) {
-    //remove epsilon
-    return clamp(vec3(compand(lrgb[0] - EPSILON), compand(lrgb[1] - EPSILON), compand(lrgb[2] - EPSILON)), 0.0, 1.0);
+vec3 spectral_linear_to_srgb(vec3 lrgb) {
+    return clamp(vec3(spectral_compand(lrgb[0] - SPECTRAL_EPSILON), spectral_compand(lrgb[1] - SPECTRAL_EPSILON), spectral_compand(lrgb[2] - SPECTRAL_EPSILON)), 0.0, 1.0);
 }
 
-void linear_to_reflectance(vec3 lrgb, inout float R[SIZE]) {
-    for (int i = 0; i < SIZE; i++) {
-      R[i] = dot(vec3(SPD_RED[i], SPD_GREEN[i], SPD_BLUE[i]), lrgb);
+void spectral_linear_to_reflectance(vec3 lrgb, inout float R[SPECTRAL_SIZE]) {
+    for (int i = 0; i < SPECTRAL_SIZE; i++) {
+      R[i] = dot(vec3(SPECTRAL_SPD_RED[i], SPECTRAL_SPD_GREEN[i], SPECTRAL_SPD_BLUE[i]), lrgb);
     }
 }
 
-vec3 xyz_to_srgb(vec3 xyz) {
-    float r = dot(D65_XYZ_RGB[0], xyz);
-    float g = dot(D65_XYZ_RGB[1], xyz);
-    float b = dot(D65_XYZ_RGB[2], xyz);
+vec3 spectral_xyz_to_srgb(vec3 xyz) {
+    float r = dot(SPECTRAL_XYZ_RGB[0], xyz);
+    float g = dot(SPECTRAL_XYZ_RGB[1], xyz);
+    float b = dot(SPECTRAL_XYZ_RGB[2], xyz);
 
-    return linear_to_srgb(vec3(r, g, b));
+    return spectral_linear_to_srgb(vec3(r, g, b));
 }
 
-vec3 reflectance_to_xyz(float R[SIZE]) {
+vec3 spectral_reflectance_to_xyz(float R[SPECTRAL_SIZE]) {
     vec3 xyz;
 
-    for (int i = 0; i < SIZE; i++) {
-      xyz[0] += dot(R[i], CIE_2012_CMF_X[i]);
-      xyz[1] += dot(R[i], CIE_2012_CMF_Y[i]);
-      xyz[2] += dot(R[i], CIE_2012_CMF_Z[i]);
+    for (int i = 0; i < SPECTRAL_SIZE; i++) {
+      xyz[0] += dot(R[i], SPECTRAL_CIE_CMF_X[i]);
+      xyz[1] += dot(R[i], SPECTRAL_CIE_CMF_Y[i]);
+      xyz[2] += dot(R[i], SPECTRAL_CIE_CMF_Z[i]);
     }
 
     return xyz;
 }
 
-float linear_to_concentration(float l1, float l2, float t) {
+float spectral_linear_to_concentration(float l1, float l2, float t) {
     float t1 = l1 * pow(1.0 - t, 2.0);
     float t2 = l2 * pow(t, 2.0);
 
     return t2 / (t1 + t2);
 }
 
-float luminance(vec3 color) {
-    return dot(D65_RGB_XYZ[1], color);
+float spectral_luminance(vec3 color) {
+    return dot(SPECTRAL_RGB_XYZ[1], color);
 }
 
 vec3 spectral_mix(vec3 color1, vec3 color2, float t) {
-    vec3 lrgb1 = srgb_to_linear(color1);
-    vec3 lrgb2 = srgb_to_linear(color2);
+    vec3 lrgb1 = spectral_srgb_to_linear(color1);
+    vec3 lrgb2 = spectral_srgb_to_linear(color2);
 
-    float l1 = luminance(lrgb1);
-    float l2 = luminance(lrgb2);
+    float l1 = spectral_luminance(lrgb1);
+    float l2 = spectral_luminance(lrgb2);
 
-    t = linear_to_concentration(l1, l2, t);
+    t = spectral_linear_to_concentration(l1, l2, t);
 
-    float R1[SIZE];
-    float R2[SIZE];
+    float R1[SPECTRAL_SIZE];
+    float R2[SPECTRAL_SIZE];
 
-    linear_to_reflectance(lrgb1, R1);
-    linear_to_reflectance(lrgb2, R2);
+    spectral_linear_to_reflectance(lrgb1, R1);
+    spectral_linear_to_reflectance(lrgb2, R2);
 
-    float R[SIZE];
+    float R[SPECTRAL_SIZE];
 
-    for (int i = 0; i < SIZE; i++) {
+    for (int i = 0; i < SPECTRAL_SIZE; i++) {
       float KS = 0.0;
 
       KS += (1.0 - t) * (pow(1.0 - R1[i], 2.0) / (2.0 * R1[i]));
@@ -664,18 +606,14 @@ vec3 spectral_mix(vec3 color1, vec3 color2, float t) {
       R[i] = KM;
     }
 
-    return xyz_to_srgb(reflectance_to_xyz(R));
+    return spectral_xyz_to_srgb(spectral_reflectance_to_xyz(R));
 }
 
-void main() {
-    vec2 st = gl_FragCoord.xy / u_resolution.xy;
-
-    st.y = 1.0 - st.y;
-
-    vec3 col = spectral_mix(u_color1.rgb, u_color2.rgb, st.x); 
-
-    o_col = vec4(col, mix(u_color1.a, u_color2.a, st.x));
+vec4 spectral_mix(vec4 color1, vec4 color2, float t) {
+    return vec4(spectral_mix(color1.rgb, color2.rgb, t), mix(color1.a, color2.a, t));
 }
+
+#endif
     `;
   }
 
@@ -686,9 +624,7 @@ void main() {
 
   exports.mix = mix;
   exports.palette = palette;
-  exports.webgl_color = webgl_color;
-  exports.webgl_vertex = webgl_vertex;
-  exports.webgl_fragment = webgl_fragment;
-  exports.webgl2_vertex = webgl2_vertex;
-  exports.webgl2_fragment = webgl2_fragment;
+  exports.glsl_color = glsl_color;
+  exports.glsl = glsl;
+  exports.glsl3 = glsl3;
 });
