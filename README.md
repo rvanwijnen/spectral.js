@@ -54,7 +54,6 @@ The spectral.palette function takes 3 required parameters: color1, color2, and l
 	let palette = spectral.palette('[240, 240, 240]', '[240, 240, 240]', 9, spectral.RGB);
 
 ![image2](/images/image2.png)
-![image4](/images/image4.png)
 
 ### Shaders
 Spectral.js supports GLSL shaders and has a built-in function 'spectral.glsl_color()' to conveniently convert color notation to an array for the shader. 
