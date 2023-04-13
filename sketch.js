@@ -6,7 +6,7 @@ let color1, color2;
 function setup_shaders() {
   let vertex = `
     #ifdef GL_ES
-    precision mediump float;
+    precision highp float;
     #endif
 
     attribute vec3 aPosition;
@@ -22,7 +22,7 @@ function setup_shaders() {
 
   let fragment_linear = `
     #ifdef GL_ES
-    precision mediump float;
+    precision highp float;
     #endif
 
     uniform vec2 u_resolution;
@@ -42,7 +42,7 @@ function setup_shaders() {
 
   let fragment_spectral = `
     #ifdef GL_ES
-    precision mediump float;
+    precision highp float;
     #endif
 
     #include "spectral.glsl"
