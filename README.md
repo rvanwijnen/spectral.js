@@ -90,6 +90,12 @@ There is also support for GLSL 3, this is available in spectral.glsl3().
 ## Contributing
 We welcome contributions from the community. If you find a bug or have a feature request, please open an issue on Github.
 
+## Support
+It's taken me a lot of time and research to make real life paint mixing available in an easy to use library.
+If you like this project and want me to keep working on it or appreciate the work I've done please consider buying me a coffee.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/C0C2KEHZW)
+
 ## License
 Spectral.js is released under the MIT License. See the LICENSE file for details.
 
