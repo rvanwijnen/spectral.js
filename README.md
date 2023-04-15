@@ -85,8 +85,6 @@ Spectral.js supports GLSL shaders and has a built-in function 'spectral.glsl_col
 
 ![image3](/images/image3.png)
 
-There is also support for GLSL 3, this is available in spectral.glsl3().
-
 ## Contributing
 We welcome contributions from the community. If you find a bug or have a feature request, please open an issue on Github.
 
