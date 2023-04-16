@@ -1,6 +1,6 @@
 ![logo](/images/logo.png)
 # Spectral.js
-[![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/onedayofcrypto.svg?style=social&label=Follow%20%40onedayofcrypto)](https://twitter.com/bukotsunikki)[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/C0C2KEHZW)
+[![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/onedayofcrypto.svg?style=social&label=Follow%20%40onedayofcrypto)](https://twitter.com/bukotsunikki)
 
 Spectral.js is an powerful and versatile JavaScript library designed to deliver realistic color mixing in your web-based projects. By harnessing the power of the Kubelka-Munk theory, a robust scientific model that simulates light interaction with paint for true-to-life color mixing, Spectral.js ensures that your projects exhibit vibrant and authentic colors.
 
@@ -91,6 +91,8 @@ We welcome contributions from the community. If you find a bug or have a feature
 ## Support
 It's taken me a lot of time and research to make real life paint mixing available in an easy to use library.
 If you like this project and want me to keep working on it or appreciate the work I've done please consider buying me a coffee.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/C0C2KEHZW)
 
 ## License
 Spectral.js is released under the MIT License. See the LICENSE file for details.
