@@ -203,31 +203,40 @@
     return [rgba[0] / 255, rgba[1] / 255, rgba[2] / 255, rgba[3] > 1 ? rgba[3] / 255 : rgba[3]];
   }
 
-  function unpack(c) {
-    if (Array.isArray(c)) {
-      if (c.length === 3 || c.length === 4) {
-        return [c[0], c[1], c[2], c[3] !== undefined ? c[3] : 1];
-      } else {
-        return [0, 0, 0, 1];
-      }
+  function unpack(color) {
+    if (Array.isArray(color)) {
+      const [r, g, b, a = 1] = color;
+
+      return [r, g, b, a];
     }
 
-    let m = c.match(/^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6,8})$/) || c.match(/^rgba?\(\s*(\d+%?)\s*,\s*(\d+%?)\s*,\s*(\d+%?)(?:\s*,\s*([\d.]+))?\s*\)$/i);
-    if (m) {
-      const f = m[1] ? 16 : 10;
-      const b = m[1]
-        ? m[1].length === 3 || m[1].length === 4
-          ? m[1]
-              .split('')
-              .map((x) => x + x)
-              .join('')
-          : m[1]
-        : m
-            .slice(1, 4)
-            .map((v) => (v.endsWith('%') ? Math.round(parseFloat(v) * 2.55) : parseInt(v)))
-            .join('');
-      const a = m[1] && (m[1].length === 4 || m[1].length === 8) ? parseInt(b.slice(6, 8), 16) / 255 : m[4] ? parseFloat(m[4]) : 1;
-      return [parseInt(b.slice(0, 2), f), parseInt(b.slice(2, 4), f), parseInt(b.slice(4, 6), f), a];
+    if (color.startsWith('rgb')) {
+      color = color
+        .slice(color.indexOf('(') + 1, -1)
+        .split(',')
+        .map((value) => (value.trim().endsWith('%') ? Math.round(parseFloat(value.trim()) * 2.55) : Number(value.trim())));
+
+      const [r, g, b, a = 1] = color;
+
+      return [r, g, b, a];
+    }
+
+    if (color.startsWith('#')) {
+      if (color.length === 4 || color.length === 5) {
+        color = color
+          .split('')
+          .slice(1)
+          .map((value) => value + value)
+          .join('');
+      } else {
+        color = color.slice(1);
+      }
+
+      color = color.match(/.{1,2}/g).map((value) => parseInt(value, 16));
+
+      const [r, g, b, a = 1] = color.length === 3 ? [...color, 1] : color;
+
+      return [r, g, b, a];
     }
 
     return [0, 0, 0, 1];
@@ -246,7 +255,7 @@
     r = r.toString(16);
     g = g.toString(16);
     b = b.toString(16);
-    a = (a > 1 ? a : a * 255).toString(16);
+    a = (a > 1 ? a : Math.round(clamp(a, 0, 1) * 255)).toString(16);
 
     if (r.length == 1) r = '0' + r;
     if (g.length == 1) g = '0' + g;
@@ -337,28 +346,6 @@
 
   function glsl() {
     return `
-//  MIT License
-//
-//  Copyright (c) 2023 Ronald van Wijnen
-//
-//  Permission is hereby granted, free of charge, to any person obtaining a
-//  copy of this software and associated documentation files (the "Software"),
-//  to deal in the Software without restriction, including without limitation
-//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//  and/or sell copies of the Software, and to permit persons to whom the
-//  Software is furnished to do so, subject to the following conditions:
-//
-//  The above copyright notice and this permission notice shall be included in
-//  all copies or substantial portions of the Software.
-//
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//  DEALINGS IN THE SOFTWARE.
-
 #ifndef SPECTRAL
 #define SPECTRAL
 
