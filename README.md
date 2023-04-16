@@ -1,6 +1,6 @@
 ![logo](/images/logo.png)
 # Spectral.js
-[![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/onedayofcrypto.svg?style=social&label=Follow%20%40onedayofcrypto)](https://twitter.com/bukotsunikki)
+[![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/onedayofcrypto.svg?style=social&label=Follow%20%40onedayofcrypto)](https://twitter.com/bukotsunikki)[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/C0C2KEHZW)
 
 Spectral.js is an powerful and versatile JavaScript library designed to deliver realistic color mixing in your web-based projects. By harnessing the power of the Kubelka-Munk theory, a robust scientific model that simulates light interaction with paint for true-to-life color mixing, Spectral.js ensures that your projects exhibit vibrant and authentic colors.
 
@@ -50,8 +50,8 @@ The return format can be spectral.RGB, spectral.RGBA, spectral.HEXA, or spectral
 The spectral.palette function takes 3 required parameters: color1, color2, and length, and an optional fourth parameter for the return format. It returns an array of colors that gradually transition from color1 to color2 with the specified length.
 
 	let palette = spectral.palette('#00357B', '#F0F0F0', 9);
-	let palette = spectral.palette('rgb(240, 240, 240)', 'rgb(240, 240, 240)', 9);
-	let palette = spectral.palette('[240, 240, 240]', '[240, 240, 240]', 9, spectral.RGB);
+	let palette = spectral.palette('rgb(0, 53, 123)', 'rgb(240, 240, 240)', 9);
+	let palette = spectral.palette('[0, 53, 123]', '[240, 240, 240]', 9, spectral.RGB);
 
 ![image2](/images/image2.png)
 
@@ -91,8 +91,6 @@ We welcome contributions from the community. If you find a bug or have a feature
 ## Support
 It's taken me a lot of time and research to make real life paint mixing available in an easy to use library.
 If you like this project and want me to keep working on it or appreciate the work I've done please consider buying me a coffee.
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/C0C2KEHZW)
 
 ## License
 Spectral.js is released under the MIT License. See the LICENSE file for details.
