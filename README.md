@@ -2,7 +2,7 @@
 # Spectral.js
 [![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/onedayofcrypto.svg?style=social&label=Follow%20%40onedayofcrypto)](https://twitter.com/bukotsunikki)
 
-Spectral.js is an powerful and versatile JavaScript library designed to deliver realistic color mixing in your web-based projects. By harnessing the power of the Kubelka-Munk theory, a robust scientific model that simulates light interaction with paint for true-to-life color mixing, Spectral.js ensures that your projects exhibit vibrant and authentic colors.
+Spectral.js is a powerful and versatile JavaScript library designed to deliver realistic color mixing in your web-based projects. By harnessing the power of the Kubelka-Munk theory, a robust scientific model that simulates light interaction with paint for true-to-life color mixing, Spectral.js ensures that your projects exhibit vibrant and authentic colors.
 
 Employing 7 distinct spectral channels, including White, Cyan, Magenta, Yellow, Red, Green, and Blue, Spectral.js can be effectively utilized across a diverse array of web-based projects, such as:
 
