@@ -73,16 +73,16 @@ def compand(x):
     return x * 12.92 if x < 0.0031308 else 1.055 * x ** (1.0 / GAMMA) - 0.055
 
 def srgb_to_linear(srgb):
-    r = uncompand((srgb[0] + EPSILON) / 255)
-    g = uncompand((srgb[1] + EPSILON) / 255)
-    b = uncompand((srgb[2] + EPSILON) / 255)
+    r = uncompand(srgb[0] / 255)
+    g = uncompand(srgb[1] / 255)
+    b = uncompand(srgb[2] / 255)
 
     return [r, g, b]
 
 def linear_to_srgb(lrgb):
-    r = compand(lrgb[0] - EPSILON)
-    g = compand(lrgb[1] - EPSILON)
-    b = compand(lrgb[2] - EPSILON)
+    r = compand(lrgb[0])
+    g = compand(lrgb[1])
+    b = compand(lrgb[2])
 
     return [round(clamp(r, 0, 1) * 255), round(clamp(g, 0, 1) * 255), round(clamp(b, 0, 1) * 255)]
     
@@ -100,53 +100,36 @@ def xyz_to_srgb(xyz):
 
     return linear_to_srgb([r, g, b])
 
-def spectral_weights(lrgb):
-    w = c = m = y = r = g = b = 0
+def spectral_upsampling(lrgb):
+    w = min(min(lrgb[0], lrgb[1]), lrgb[2])
 
-    if lrgb[0] <= lrgb[1] and lrgb[0] <= lrgb[2]:
-        w = lrgb[0]
+    lrgb = [lrgb[0] - w, lrgb[1] - w, lrgb[2] - w]
 
-        if lrgb[1] <= lrgb[2]:
-            c = lrgb[1] - lrgb[0]
-            b = lrgb[2] - lrgb[1]
-        else:
-            c = lrgb[2] - lrgb[0]
-            g = lrgb[1] - lrgb[2]
-    elif lrgb[1] <= lrgb[0] and lrgb[1] <= lrgb[2]:
-        w = lrgb[1]
-
-        if lrgb[0] <= lrgb[2]:
-            m = lrgb[0] - lrgb[1]
-            b = lrgb[2] - lrgb[0]
-        else:
-            m = lrgb[2] - lrgb[1]
-            r = lrgb[0] - lrgb[2]
-    elif lrgb[2] <= lrgb[0] and lrgb[2] <= lrgb[1]:
-        w = lrgb[2]
-
-        if lrgb[0] <= lrgb[1]:
-            y = lrgb[0] - lrgb[2]
-            g = lrgb[1] - lrgb[0]
-        else:
-            y = lrgb[1] - lrgb[2]
-            r = lrgb[0] - lrgb[1]
+    c = min(lrgb[1], lrgb[2])
+    m = min(lrgb[0], lrgb[2])
+    y = min(lrgb[0], lrgb[1])
+    r = max(0, min(lrgb[0] - lrgb[2], lrgb[0] - lrgb[1]))
+    g = max(0, min(lrgb[1] - lrgb[2], lrgb[1] - lrgb[0]))
+    b = max(0, min(lrgb[2] - lrgb[1], lrgb[2] - lrgb[0]))
 
     return [w, c, m, y, r, g, b]
 
 def linear_to_reflectance(lrgb):
-    weights = spectral_weights(lrgb)
+    weights = spectral_upsampling(lrgb)
 
     R = [0] * SIZE
 
     for i in range(SIZE):
         R[i] = (
-            weights[0]
-            + weights[1] * SPD_C[i]
-            + weights[2] * SPD_M[i]
-            + weights[3] * SPD_Y[i]
-            + weights[4] * SPD_R[i]
-            + weights[5] * SPD_G[i]
-            + weights[6] * SPD_B[i]
+            max(EPSILON,
+                weights[0]
+                + weights[1] * SPD_C[i]
+                + weights[2] * SPD_M[i]
+                + weights[3] * SPD_Y[i]
+                + weights[4] * SPD_R[i]
+                + weights[5] * SPD_G[i]
+                + weights[6] * SPD_B[i]
+            )
         )
 
     return R
