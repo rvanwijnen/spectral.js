@@ -25,7 +25,7 @@
 
 const int SPECTRAL_SIZE = 38;
 const float SPECTRAL_GAMMA = 2.4;
-const float SPECTRAL_EPSILON = 0.01;
+const float SPECTRAL_EPSILON = 0.0001;
 
 float spectral_uncompand(float x) {
   return (x < 0.04045) ? x / 12.92 : pow((x + 0.055) / 1.055, SPECTRAL_GAMMA);
@@ -36,97 +36,69 @@ float spectral_compand(float x) {
 }
 
 vec3 spectral_srgb_to_linear(vec3 srgb) {
-    return vec3(spectral_uncompand(srgb[0] + SPECTRAL_EPSILON), spectral_uncompand(srgb[1] + SPECTRAL_EPSILON), spectral_uncompand(srgb[2] + SPECTRAL_EPSILON));
+    return vec3(spectral_uncompand(srgb[0]), spectral_uncompand(srgb[1]), spectral_uncompand(srgb[2]));
 }
 
 vec3 spectral_linear_to_srgb(vec3 lrgb) {
-    return clamp(vec3(spectral_compand(lrgb[0] - SPECTRAL_EPSILON), spectral_compand(lrgb[1] - SPECTRAL_EPSILON), spectral_compand(lrgb[2] - SPECTRAL_EPSILON)), 0.0, 1.0);
+    return clamp(vec3(spectral_compand(lrgb[0]), spectral_compand(lrgb[1]), spectral_compand(lrgb[2])), 0.0, 1.0);
 }
 
-void spectral_weights(vec3 lrgb, inout float weights[7]) {
-    weights[0] = 0.;
-    weights[1] = 0.;
-    weights[2] = 0.;
-    weights[3] = 0.;
-    weights[4] = 0.;
-    weights[5] = 0.;
-    weights[6] = 0.;
+void spectral_upsampling(vec3 lrgb, out float w, out float c, out float m, out float y, out float r, out float g, out float b) {
+    w = min(lrgb.r, min(lrgb.g, lrgb.b));
 
-    if (lrgb[0] <= lrgb[1] && lrgb[0] <= lrgb[2]) {
-		weights[0] = lrgb[0];
+    lrgb -= w;
 
-      	if (lrgb[1] <= lrgb[2]) {
-            weights[1] = lrgb[1] - lrgb[0];
-            weights[6] = lrgb[2] - lrgb[1];
-      	} else {
-            weights[1] = lrgb[2] - lrgb[0];
-            weights[5] = lrgb[1] - lrgb[2];
-      	}
-    } else if (lrgb[1] <= lrgb[0] && lrgb[1] <= lrgb[2]) {
-      	weights[0] = lrgb[1];
-
-      	if (lrgb[0] <= lrgb[2]) {
-            weights[2] = lrgb[0] - lrgb[1];
-            weights[6] = lrgb[2] - lrgb[0];
-      	} else {
-            weights[2] = lrgb[2] - lrgb[1];
-            weights[4] = lrgb[0] - lrgb[2];
-      	}
-    } else if (lrgb[2] <= lrgb[0] && lrgb[2] <= lrgb[1]) {
-      	weights[0] = lrgb[2];
-
-      	if (lrgb[0] <= lrgb[1]) {
-            weights[3] = lrgb[0] - lrgb[2];
-            weights[5] = lrgb[1] - lrgb[0];
-        } else {
-        	weights[3] = lrgb[1] - lrgb[2];
-          	weights[4] = lrgb[0] - lrgb[1];
-    	}
-	}
+    c = min(lrgb.g, lrgb.b);
+    m = min(lrgb.r, lrgb.b);
+    y = min(lrgb.r, lrgb.g);
+    r = min(max(0., lrgb.r - lrgb.b), max(0., lrgb.r - lrgb.g));
+    g = min(max(0., lrgb.g - lrgb.b), max(0., lrgb.g - lrgb.r));
+    b = min(max(0., lrgb.b - lrgb.g), max(0., lrgb.b - lrgb.r));
 }
 
 void spectral_linear_to_reflectance(vec3 lrgb, inout float R[SPECTRAL_SIZE]) {
-    float weights[7];
-    spectral_weights(lrgb, weights);
+    float w, c, m, y, r, g, b;
     
-     R[0] = weights[0] + weights[1] * 0.96853629 + weights[2] * 0.51567122 + weights[3] * 0.02055257 + weights[4] * 0.03147571 + weights[5] * 0.49108579 + weights[6] * 0.97901834;
-     R[1] = weights[0] + weights[1] * 0.96855103 + weights[2] * 0.54015520 + weights[3] * 0.02059936 + weights[4] * 0.03146636 + weights[5] * 0.46944057 + weights[6] * 0.97901649;
-     R[2] = weights[0] + weights[1] * 0.96859338 + weights[2] * 0.62645502 + weights[3] * 0.02062723 + weights[4] * 0.03140624 + weights[5] * 0.40165780 + weights[6] * 0.97901118;
-     R[3] = weights[0] + weights[1] * 0.96877345 + weights[2] * 0.75595012 + weights[3] * 0.02073387 + weights[4] * 0.03119611 + weights[5] * 0.24490420 + weights[6] * 0.97892146;
-     R[4] = weights[0] + weights[1] * 0.96942204 + weights[2] * 0.92826996 + weights[3] * 0.02114202 + weights[4] * 0.03053888 + weights[5] * 0.06826880 + weights[6] * 0.97858555;
-     R[5] = weights[0] + weights[1] * 0.97143709 + weights[2] * 0.97223624 + weights[3] * 0.02233154 + weights[4] * 0.02856855 + weights[5] * 0.02732883 + weights[6] * 0.97743705;
-     R[6] = weights[0] + weights[1] * 0.97541862 + weights[2] * 0.98616174 + weights[3] * 0.02556857 + weights[4] * 0.02459485 + weights[5] * 0.01360600 + weights[6] * 0.97428075;
-     R[7] = weights[0] + weights[1] * 0.98074186 + weights[2] * 0.98955255 + weights[3] * 0.03330189 + weights[4] * 0.01929520 + weights[5] * 0.01000187 + weights[6] * 0.96663223;
-     R[8] = weights[0] + weights[1] * 0.98580992 + weights[2] * 0.98676237 + weights[3] * 0.05185294 + weights[4] * 0.01423112 + weights[5] * 0.01284127 + weights[6] * 0.94822893;
-     R[9] = weights[0] + weights[1] * 0.98971194 + weights[2] * 0.97312575 + weights[3] * 0.10087639 + weights[4] * 0.01033111 + weights[5] * 0.02636635 + weights[6] * 0.89937713;
-    R[10] = weights[0] + weights[1] * 0.99238027 + weights[2] * 0.91944277 + weights[3] * 0.24000413 + weights[4] * 0.00765876 + weights[5] * 0.07058713 + weights[6] * 0.76070164;
-    R[11] = weights[0] + weights[1] * 0.99409844 + weights[2] * 0.32564851 + weights[3] * 0.53589066 + weights[4] * 0.00593693 + weights[5] * 0.70421692 + weights[6] * 0.46420440;
-    R[12] = weights[0] + weights[1] * 0.99517200 + weights[2] * 0.13820628 + weights[3] * 0.79874659 + weights[4] * 0.00485616 + weights[5] * 0.85473994 + weights[6] * 0.20123039;
-    R[13] = weights[0] + weights[1] * 0.99576545 + weights[2] * 0.05015143 + weights[3] * 0.91186529 + weights[4] * 0.00426186 + weights[5] * 0.95081565 + weights[6] * 0.08808402;
-    R[14] = weights[0] + weights[1] * 0.99593552 + weights[2] * 0.02912336 + weights[3] * 0.95399623 + weights[4] * 0.00409039 + weights[5] * 0.97170370 + weights[6] * 0.04592894;
-    R[15] = weights[0] + weights[1] * 0.99564041 + weights[2] * 0.02421691 + weights[3] * 0.97137099 + weights[4] * 0.00438375 + weights[5] * 0.97651888 + weights[6] * 0.02860373;
-    R[16] = weights[0] + weights[1] * 0.99464769 + weights[2] * 0.02660696 + weights[3] * 0.97939505 + weights[4] * 0.00537525 + weights[5] * 0.97429245 + weights[6] * 0.02060067;
-    R[17] = weights[0] + weights[1] * 0.99229579 + weights[2] * 0.03407586 + weights[3] * 0.98345207 + weights[4] * 0.00772962 + weights[5] * 0.97012917 + weights[6] * 0.01656701;
-    R[18] = weights[0] + weights[1] * 0.98638762 + weights[2] * 0.04835936 + weights[3] * 0.98553736 + weights[4] * 0.01366120 + weights[5] * 0.94258630 + weights[6] * 0.01451549;
-    R[19] = weights[0] + weights[1] * 0.96829712 + weights[2] * 0.00011720 + weights[3] * 0.98648905 + weights[4] * 0.03181352 + weights[5] * 0.99989207 + weights[6] * 0.01357964;
-    R[20] = weights[0] + weights[1] * 0.89228016 + weights[2] * 0.00008554 + weights[3] * 0.98674535 + weights[4] * 0.10791525 + weights[5] * 0.99989891 + weights[6] * 0.01331243;
-    R[21] = weights[0] + weights[1] * 0.53740239 + weights[2] * 0.85267882 + weights[3] * 0.98657555 + weights[4] * 0.46249516 + weights[5] * 0.13823139 + weights[6] * 0.01347661;
-    R[22] = weights[0] + weights[1] * 0.15360445 + weights[2] * 0.93188793 + weights[3] * 0.98611877 + weights[4] * 0.84604333 + weights[5] * 0.06968113 + weights[6] * 0.01387181;
-    R[23] = weights[0] + weights[1] * 0.05705719 + weights[2] * 0.94810268 + weights[3] * 0.98559942 + weights[4] * 0.94275572 + weights[5] * 0.05628787 + weights[6] * 0.01435472;
-    R[24] = weights[0] + weights[1] * 0.03126539 + weights[2] * 0.94200977 + weights[3] * 0.98507063 + weights[4] * 0.96860996 + weights[5] * 0.06111561 + weights[6] * 0.01479836;
-    R[25] = weights[0] + weights[1] * 0.02205445 + weights[2] * 0.91478045 + weights[3] * 0.98460039 + weights[4] * 0.97783966 + weights[5] * 0.08987709 + weights[6] * 0.01515250;
-    R[26] = weights[0] + weights[1] * 0.01802271 + weights[2] * 0.87065445 + weights[3] * 0.98425301 + weights[4] * 0.98187757 + weights[5] * 0.13656016 + weights[6] * 0.01540513;
-    R[27] = weights[0] + weights[1] * 0.01613460 + weights[2] * 0.78827548 + weights[3] * 0.98403909 + weights[4] * 0.98377315 + weights[5] * 0.22169624 + weights[6] * 0.01557233;
-    R[28] = weights[0] + weights[1] * 0.01520947 + weights[2] * 0.65738359 + weights[3] * 0.98388535 + weights[4] * 0.98470202 + weights[5] * 0.32176956 + weights[6] * 0.01565710;
-    R[29] = weights[0] + weights[1] * 0.01475977 + weights[2] * 0.59909403 + weights[3] * 0.98376116 + weights[4] * 0.98515481 + weights[5] * 0.36157329 + weights[6] * 0.01571025;
-    R[30] = weights[0] + weights[1] * 0.01454263 + weights[2] * 0.56817268 + weights[3] * 0.98368246 + weights[4] * 0.98537114 + weights[5] * 0.48361920 + weights[6] * 0.01571916;
-    R[31] = weights[0] + weights[1] * 0.01444459 + weights[2] * 0.54031997 + weights[3] * 0.98365023 + weights[4] * 0.98546685 + weights[5] * 0.46488579 + weights[6] * 0.01572133;
-    R[32] = weights[0] + weights[1] * 0.01439897 + weights[2] * 0.52110241 + weights[3] * 0.98361309 + weights[4] * 0.98550011 + weights[5] * 0.47440306 + weights[6] * 0.01572502;
-    R[33] = weights[0] + weights[1] * 0.01437620 + weights[2] * 0.51041094 + weights[3] * 0.98357259 + weights[4] * 0.98551031 + weights[5] * 0.48576990 + weights[6] * 0.01571717;
-    R[34] = weights[0] + weights[1] * 0.01436343 + weights[2] * 0.50526577 + weights[3] * 0.98353856 + weights[4] * 0.98550741 + weights[5] * 0.49267971 + weights[6] * 0.01571905;
-    R[35] = weights[0] + weights[1] * 0.01435687 + weights[2] * 0.50255080 + weights[3] * 0.98351247 + weights[4] * 0.98551323 + weights[5] * 0.49625685 + weights[6] * 0.01571059;
-    R[36] = weights[0] + weights[1] * 0.01435370 + weights[2] * 0.50126452 + weights[3] * 0.98350101 + weights[4] * 0.98551563 + weights[5] * 0.49807754 + weights[6] * 0.01569728;
-    R[37] = weights[0] + weights[1] * 0.01435408 + weights[2] * 0.50083021 + weights[3] * 0.98350852 + weights[4] * 0.98551547 + weights[5] * 0.49889859 + weights[6] * 0.01570020;
+    spectral_upsampling(lrgb, w, c, m, y, r, g, b);
+    
+     R[0] = max(SPECTRAL_EPSILON, w + c * 0.96853629 + m * 0.51567122 + y * 0.02055257 + r * 0.03147571 + g * 0.49108579 + b * 0.97901834);
+     R[1] = max(SPECTRAL_EPSILON, w + c * 0.96855103 + m * 0.54015520 + y * 0.02059936 + r * 0.03146636 + g * 0.46944057 + b * 0.97901649);
+     R[2] = max(SPECTRAL_EPSILON, w + c * 0.96859338 + m * 0.62645502 + y * 0.02062723 + r * 0.03140624 + g * 0.40165780 + b * 0.97901118);
+     R[3] = max(SPECTRAL_EPSILON, w + c * 0.96877345 + m * 0.75595012 + y * 0.02073387 + r * 0.03119611 + g * 0.24490420 + b * 0.97892146);
+     R[4] = max(SPECTRAL_EPSILON, w + c * 0.96942204 + m * 0.92826996 + y * 0.02114202 + r * 0.03053888 + g * 0.06826880 + b * 0.97858555);
+     R[5] = max(SPECTRAL_EPSILON, w + c * 0.97143709 + m * 0.97223624 + y * 0.02233154 + r * 0.02856855 + g * 0.02732883 + b * 0.97743705);
+     R[6] = max(SPECTRAL_EPSILON, w + c * 0.97541862 + m * 0.98616174 + y * 0.02556857 + r * 0.02459485 + g * 0.01360600 + b * 0.97428075);
+     R[7] = max(SPECTRAL_EPSILON, w + c * 0.98074186 + m * 0.98955255 + y * 0.03330189 + r * 0.01929520 + g * 0.01000187 + b * 0.96663223);
+     R[8] = max(SPECTRAL_EPSILON, w + c * 0.98580992 + m * 0.98676237 + y * 0.05185294 + r * 0.01423112 + g * 0.01284127 + b * 0.94822893);
+     R[9] = max(SPECTRAL_EPSILON, w + c * 0.98971194 + m * 0.97312575 + y * 0.10087639 + r * 0.01033111 + g * 0.02636635 + b * 0.89937713);
+    R[10] = max(SPECTRAL_EPSILON, w + c * 0.99238027 + m * 0.91944277 + y * 0.24000413 + r * 0.00765876 + g * 0.07058713 + b * 0.76070164);
+    R[11] = max(SPECTRAL_EPSILON, w + c * 0.99409844 + m * 0.32564851 + y * 0.53589066 + r * 0.00593693 + g * 0.70421692 + b * 0.46420440);
+    R[12] = max(SPECTRAL_EPSILON, w + c * 0.99517200 + m * 0.13820628 + y * 0.79874659 + r * 0.00485616 + g * 0.85473994 + b * 0.20123039);
+    R[13] = max(SPECTRAL_EPSILON, w + c * 0.99576545 + m * 0.05015143 + y * 0.91186529 + r * 0.00426186 + g * 0.95081565 + b * 0.08808402);
+    R[14] = max(SPECTRAL_EPSILON, w + c * 0.99593552 + m * 0.02912336 + y * 0.95399623 + r * 0.00409039 + g * 0.97170370 + b * 0.04592894);
+    R[15] = max(SPECTRAL_EPSILON, w + c * 0.99564041 + m * 0.02421691 + y * 0.97137099 + r * 0.00438375 + g * 0.97651888 + b * 0.02860373);
+    R[16] = max(SPECTRAL_EPSILON, w + c * 0.99464769 + m * 0.02660696 + y * 0.97939505 + r * 0.00537525 + g * 0.97429245 + b * 0.02060067);
+    R[17] = max(SPECTRAL_EPSILON, w + c * 0.99229579 + m * 0.03407586 + y * 0.98345207 + r * 0.00772962 + g * 0.97012917 + b * 0.01656701);
+    R[18] = max(SPECTRAL_EPSILON, w + c * 0.98638762 + m * 0.04835936 + y * 0.98553736 + r * 0.01366120 + g * 0.94258630 + b * 0.01451549);
+    R[19] = max(SPECTRAL_EPSILON, w + c * 0.96829712 + m * 0.00011720 + y * 0.98648905 + r * 0.03181352 + g * 0.99989207 + b * 0.01357964);
+    R[20] = max(SPECTRAL_EPSILON, w + c * 0.89228016 + m * 0.00008554 + y * 0.98674535 + r * 0.10791525 + g * 0.99989891 + b * 0.01331243);
+    R[21] = max(SPECTRAL_EPSILON, w + c * 0.53740239 + m * 0.85267882 + y * 0.98657555 + r * 0.46249516 + g * 0.13823139 + b * 0.01347661);
+    R[22] = max(SPECTRAL_EPSILON, w + c * 0.15360445 + m * 0.93188793 + y * 0.98611877 + r * 0.84604333 + g * 0.06968113 + b * 0.01387181);
+    R[23] = max(SPECTRAL_EPSILON, w + c * 0.05705719 + m * 0.94810268 + y * 0.98559942 + r * 0.94275572 + g * 0.05628787 + b * 0.01435472);
+    R[24] = max(SPECTRAL_EPSILON, w + c * 0.03126539 + m * 0.94200977 + y * 0.98507063 + r * 0.96860996 + g * 0.06111561 + b * 0.01479836);
+    R[25] = max(SPECTRAL_EPSILON, w + c * 0.02205445 + m * 0.91478045 + y * 0.98460039 + r * 0.97783966 + g * 0.08987709 + b * 0.01515250);
+    R[26] = max(SPECTRAL_EPSILON, w + c * 0.01802271 + m * 0.87065445 + y * 0.98425301 + r * 0.98187757 + g * 0.13656016 + b * 0.01540513);
+    R[27] = max(SPECTRAL_EPSILON, w + c * 0.01613460 + m * 0.78827548 + y * 0.98403909 + r * 0.98377315 + g * 0.22169624 + b * 0.01557233);
+    R[28] = max(SPECTRAL_EPSILON, w + c * 0.01520947 + m * 0.65738359 + y * 0.98388535 + r * 0.98470202 + g * 0.32176956 + b * 0.01565710);
+    R[29] = max(SPECTRAL_EPSILON, w + c * 0.01475977 + m * 0.59909403 + y * 0.98376116 + r * 0.98515481 + g * 0.36157329 + b * 0.01571025);
+    R[30] = max(SPECTRAL_EPSILON, w + c * 0.01454263 + m * 0.56817268 + y * 0.98368246 + r * 0.98537114 + g * 0.48361920 + b * 0.01571916);
+    R[31] = max(SPECTRAL_EPSILON, w + c * 0.01444459 + m * 0.54031997 + y * 0.98365023 + r * 0.98546685 + g * 0.46488579 + b * 0.01572133);
+    R[32] = max(SPECTRAL_EPSILON, w + c * 0.01439897 + m * 0.52110241 + y * 0.98361309 + r * 0.98550011 + g * 0.47440306 + b * 0.01572502);
+    R[33] = max(SPECTRAL_EPSILON, w + c * 0.01437620 + m * 0.51041094 + y * 0.98357259 + r * 0.98551031 + g * 0.48576990 + b * 0.01571717);
+    R[34] = max(SPECTRAL_EPSILON, w + c * 0.01436343 + m * 0.50526577 + y * 0.98353856 + r * 0.98550741 + g * 0.49267971 + b * 0.01571905);
+    R[35] = max(SPECTRAL_EPSILON, w + c * 0.01435687 + m * 0.50255080 + y * 0.98351247 + r * 0.98551323 + g * 0.49625685 + b * 0.01571059);
+    R[36] = max(SPECTRAL_EPSILON, w + c * 0.01435370 + m * 0.50126452 + y * 0.98350101 + r * 0.98551563 + g * 0.49807754 + b * 0.01569728);
+    R[37] = max(SPECTRAL_EPSILON, w + c * 0.01435408 + m * 0.50083021 + y * 0.98350852 + r * 0.98551547 + g * 0.49889859 + b * 0.01570020);
 }
 
 vec3 spectral_xyz_to_srgb(vec3 xyz) {
