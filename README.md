@@ -56,13 +56,12 @@ The spectral.palette function takes 3 required parameters: color1, color2, and l
 ![image2](/images/image2.png)
 
 ### Shaders
-Spectral.js supports GLSL shaders and has a built-in function 'spectral.glsl_color()' to conveniently convert color notation to an array for the shader. 
+Spectral.js supports GLSL shaders and has a built-in function 'spectral.glsl_color()' to conveniently convert color notation to an array for the shader.
+Use webgl2 if you can for better precision.
 
 ##### GLSL
 	let fragment = `
-	    #ifdef GL_ES
-	    precision mediump float;
-	    #endif
+	    precision highp float;
 
 	    #include "spectral.glsl"
 
@@ -89,7 +88,7 @@ Spectral.js supports GLSL shaders and has a built-in function 'spectral.glsl_col
 We welcome contributions from the community. If you find a bug or have a feature request, please open an issue on Github.
 
 ## Support
-It's taken me a lot of time and research to make real life paint mixing available in an easy to use library.
+It's taken me a lot of time to research and make real life paint mixing available in an easy to use library.
 If you like this project and want me to keep working on it or appreciate the work I've done please consider buying me a coffee.
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/C0C2KEHZW)

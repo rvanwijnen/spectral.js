@@ -5,9 +5,7 @@ let color1, color2;
 
 function setup_shaders() {
   let vertex = `
-    #ifdef GL_ES
     precision highp float;
-    #endif
 
     attribute vec3 aPosition;
 
@@ -21,9 +19,7 @@ function setup_shaders() {
   `;
 
   let fragment_linear = `
-    #ifdef GL_ES
     precision highp float;
-    #endif
 
     uniform vec2 u_resolution;
     uniform vec4 u_color1;
@@ -41,9 +37,7 @@ function setup_shaders() {
   `;
 
   let fragment_spectral = `
-    #ifdef GL_ES
     precision highp float;
-    #endif
 
     #include "spectral.glsl"
 
@@ -74,6 +68,8 @@ function setup() {
   pixelDensity(4);
 
   buffer = createGraphics(800, 100, WEBGL);
+  //set to webgl2 for better precision
+  buffer.drawingContext = buffer.elt.getContext('webgl2');
   buffer.setAttributes({ alpha: false });
   buffer.pixelDensity(1);
   buffer.noStroke();
