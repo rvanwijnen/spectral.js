@@ -1,7 +1,7 @@
 ![logo](/images/banner.png)
 
 [![](https://data.jsdelivr.com/v1/package/npm/spectral.js/badge?style=rounded)](https://www.jsdelivr.com/package/npm/spectral.js)
-[![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/onedayofcrypto.svg?style=social&label=Follow%20%40onedayofcrypto)](https://twitter.com/onedayofcrypto)
+[![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/onedayofcrypto.svg?style=social&label=Follow%20%40ronaldvanwijnen)](https://twitter.com/ronaldvanwijnen)
 
 **Spectral.js** is a lightweight JavaScript library for realistic color mixing based on the **Kubelka-Munk theory**.
 It's designed specifically for developers and artists aiming to implement realistic pigment mixing in their projects.
@@ -306,3 +306,4 @@ MIT © **2025 Ronald van Wijnen**
 - Uses [codedye](https://github.com/Tezumie/codedye) for syntax highlighting on the site.
 
 - Thanks also to [SCRT WPNS](https://scrtwpns.com/) for their awesome product [Mixbox](https://scrtwpns.com/mixbox/) which inspired me to research the Kubelka-Munk theory.
+
