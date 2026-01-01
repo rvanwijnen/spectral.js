@@ -23,7 +23,7 @@ The goals behind Spectral.js:
 
 Whether you’re building a color picker, a digital painting app, or just experimenting with creative coding, **Spectral.js** gives you a closer approximation to how real pigments behave.
 
-👉 You can try **Spectral.js** live at [onedayofcrypto.art](https://onedayofcrypto.art/)!
+👉 You can try **Spectral.js** live at [onedayofcrypto.art](https://spectraljs.com/)!
 
 ---
 
@@ -306,4 +306,5 @@ MIT © **2025 Ronald van Wijnen**
 - Uses [codedye](https://github.com/Tezumie/codedye) for syntax highlighting on the site.
 
 - Thanks also to [SCRT WPNS](https://scrtwpns.com/) for their awesome product [Mixbox](https://scrtwpns.com/mixbox/) which inspired me to research the Kubelka-Munk theory.
+
 
