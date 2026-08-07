@@ -659,7 +659,11 @@
    */
   const parse = (str) => {
     if (str[0] === '#') {
-      str = str.length === 4 ? str.replace(/./g, (m) => m + m).slice(1) : str.slice(1);
+      str = str.slice(1);
+      if (str.length === 3) {
+        str = str.replace(/./g, (m) => m + m)
+      }
+
       return [
         parseInt(str.substring(0, 2), 16),
         parseInt(str.substring(2, 4), 16),
